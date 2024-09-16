@@ -1,6 +1,6 @@
 import express from "express";
 import mongoose from "mongoose";
-import Student from "./models/Student.js";
+// import Student from "./models/EamilPassword.js";
 import StudentRoutes from "./Routes/StudentRoutes.js";
 import cors from "cors";
 
