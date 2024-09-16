@@ -3,6 +3,9 @@ import EmailPassword from "../models/EmailPassword.js";
 import Personal  from "../models/Personal.js"; // Use default import (no curly braces)
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
+import dotenv from 'dotenv';
+
+dotenv.config(); 
 import verifyToken from "../Middleware/VerifyToken.js"; //for protected route-->student info with verified user.email
 const Router = express.Router();
 
@@ -47,17 +50,17 @@ Router.post("/login", async (req, res) => {
     const student = await EmailPassword.findOne({ email });
 
     if (!student) {
-      return res.json("not found");
+      return res.json({message:"not found"});
     }
 
     // Compare the provided password with the hashed password
-    const isMatch = await bcrypt.compare(password, student.password);
+    const isMatch = bcrypt.compare(password, student.password);
     if (!isMatch) {
-      return res.json("password not match");
+      return res.json({message:"password not match"});
     }
 
     // Create and sign a JWT token (with user id or any payload)
-    const token = jwt.sign({ id: student._id, email: student.email }, JWT_SECRET, { expiresIn: '1h' });
+    const token = jwt.sign({ id: student._id, email: student.email }, process.env.JWT_SECRET, { expiresIn: '1h' });
 
     res.json({ message: "Found and verified", token }); // Send token to the client
   } catch (err) {
