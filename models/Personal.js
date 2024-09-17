@@ -1,6 +1,7 @@
 import mongoose from 'mongoose';
 
 const Personalschema = new mongoose.Schema({
+  Email:String,
   Name: String,
   RollNumber:String,
   Department:String,
@@ -12,7 +13,8 @@ const Personalschema = new mongoose.Schema({
  CGPA:String,
   Gender:String,
   YearOfPassing:String,
-  Resume:String
+  Resume:String,
+  Role:String
 
 
 
