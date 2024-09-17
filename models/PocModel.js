@@ -10,7 +10,6 @@ const Pocschema = new mongoose.Schema({
     recruitmentProcess: String,
     location: String,
     bond: String,
-    jdfile:String
 });
 
 const Poc = mongoose.model("Poc", Pocschema);

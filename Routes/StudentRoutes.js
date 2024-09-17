@@ -1,7 +1,7 @@
 import express from "express";
-import multer from 'multer';
-import path from 'path';
-import { fileURLToPath } from 'url';
+// import multer from 'multer';
+// import path from 'path';
+// import { fileURLToPath } from 'url';
 import nodemailer from 'nodemailer'; // Import nodemailer for sending OTP emails
 import EmailPassword from "../models/EmailPassword.js"; 
 import Personal from "../models/Personal.js";
@@ -16,33 +16,33 @@ const Router = express.Router();
 dotenv.config(); 
 import verifyToken from "../Middleware/VerifyToken.js"; //for protected route-->student info with verified user.email
 
-// Multer storage setup
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, './uploads');
-  },
-  filename: function (req, file, cb) {
-    cb(null, file.originalname);
-  }
-});
+// // Multer storage setup
+// const storage = multer.diskStorage({
+//   destination: function (req, file, cb) {
+//     cb(null, './uploads');
+//   },
+//   filename: function (req, file, cb) {
+//     cb(null, file.originalname);
+//   }
+// });
 
-const upload = multer({ storage: storage });
+// const upload = multer({ storage: storage });
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+// const __filename = fileURLToPath(import.meta.url);
+// const __dirname = path.dirname(__filename);
 
 // Route to serve the PDF file
-Router.get('/student/:filename', (req, res) => {
-  const filename = req.params.filename;
-  const filePath = path.join(__dirname, 'uploads', filename);
+// Router.get('/student/:filename', (req, res) => {
+//   const filename = req.params.filename;
+//   const filePath = path.join(__dirname, 'uploads', filename);
 
-  res.sendFile(filePath, (err) => {
-    if (err) {
-      console.error('Error sending the file:', err);
-      res.status(500).send('Error occurred while sending the file.');
-    }
-  });
-});
+//   res.sendFile(filePath, (err) => {
+//     if (err) {
+//       console.error('Error sending the file:', err);
+//       res.status(500).send('Error occurred while sending the file.');
+//     }
+//   });
+// });
 
 // Create transporter for nodemailer (for sending OTP emails)
 const transporter = nodemailer.createTransport({
@@ -162,7 +162,7 @@ Router.post("/login", async (req, res) => {
     }
 
     // Compare the provided password with the hashed password
-    const isMatch = bcrypt.compare(password, student.password);
+    const isMatch = await bcrypt.compare(password, student.password);
     if (!isMatch) {
       return res.json({message:"password not match"});
     }
@@ -178,9 +178,9 @@ Router.post("/login", async (req, res) => {
 
 
 // Route to handle POC submissions with JD file
-Router.post("/poc", upload.single('jdfile'), async (req, res) => {
+Router.post("/poc", async (req, res) => {
   const { Companyname, criteria, ctc, dept, skills, date, recruitmentProcess, location, bond } = req.body;
-  const jdfile = req.file.filename;
+
 
   try {
     const poc = await Poc.create({
@@ -193,7 +193,6 @@ Router.post("/poc", upload.single('jdfile'), async (req, res) => {
       recruitmentProcess,
       location,
       bond,
-      jdfile
     });
 
     res.json({ poc });
@@ -201,5 +200,21 @@ Router.post("/poc", upload.single('jdfile'), async (req, res) => {
     res.status(500).json("Error occurred while submitting");
   }
 });
+
+Router.post("/student", async (req, res) => {
+  const email = req.body.email;
+  console.log(email);
+  try {
+    const student = await Personal.findOne({Email: email }); // Make sure the field name matches the DB schema
+    if (!student) {
+      return res.status(404).json({ message: "Student not found" });
+    }
+     res.json(student);
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ message: "Server error" });
+  }
+});
+
 
 export default Router;
