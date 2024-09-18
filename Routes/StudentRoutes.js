@@ -216,5 +216,44 @@ Router.post("/student", async (req, res) => {
   }
 });
 
+// Route for adding a POC
+Router.post('/add-poc', async (req, res) => {
+  const { Email} = req.body;
+
+  try {
+      const person = await Personal.findOne({Email: Email });
+
+      if (!person) {
+          return res.status(404).json({ message: "User not found" });
+      }
+
+      person.Role = 'poc';
+      await person.save();
+
+      res.status(200).json({ message: "POC added successfully" });
+  } catch (error) {
+      res.status(500).json({ message: "Error updating role", error });
+  }
+});
+
+// Route for removing a POC
+Router.post('/remove-poc', async (req, res) => {
+  const { Email } = req.body;
+
+  try {
+      const person = await Personal.findOne({Email: Email });
+
+      if (!person) {
+          return res.status(404).json({ message: "User not found" });
+      }
+
+      person.Role = 'student';
+      await person.save();
+
+      res.status(200).json({ message: "POC removed successfully" });
+  } catch (error) {
+      res.status(500).json({ message: "Error updating role", error });
+  }
+});
 
 export default Router;
