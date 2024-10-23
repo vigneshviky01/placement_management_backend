@@ -156,22 +156,31 @@ Router.post("/login", async (req, res) => {
   const { email, password } = req.body;
   try {
     const student = await EmailPassword.findOne({ email });
+    const student2 = await Personal.findOne({ Email :email });
 
+    // If student is not found in either collection
     if (!student) {
-      return res.json({message:"not found"});
+      return res.json({ message: "Email not found" });
+    }
+
+    // If student2 (from Personal collection) is not found
+    console.log("Role test: ",student2)
+    if (!student2) {
+      return res.json({ message: "No role found for the student" });
     }
 
     // Compare the provided password with the hashed password
     const isMatch = await bcrypt.compare(password, student.password);
     if (!isMatch) {
-      return res.json({message:"password not match"});
+      return res.json({ message: "Password does not match" });
     }
 
     // Create and sign a JWT token (with user id or any payload)
-    const token = jwt.sign({ id: student._id, email: student.email }, process.env.JWT_SECRET, { expiresIn: '1h' });
+    const token = jwt.sign({ id: student._id, email: student.email, role: student2.Role }, process.env.JWT_SECRET, { expiresIn: '1h' });
 
-    res.json({ message: "Found and verified", token }); // Send token to the client
+    res.json({ message: "Login successful", token }); // Send token to the client
   } catch (err) {
+    console.log(err);
     res.status(500).json({ message: "Login error", err });
   }
 });
