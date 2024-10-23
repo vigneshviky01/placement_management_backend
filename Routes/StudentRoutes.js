@@ -225,6 +225,42 @@ Router.post("/student", async (req, res) => {
   }
 });
 
+// Route to update student details selectively (PATCH request)
+Router.patch('/student/update', async (req, res) => {
+  const { email, rollNumber, department, personalEmail, tenthMark, twelfthMark, currentSemester, CGPA, gender, yearOfPassing, resume } = req.body;
+
+  try {
+    // Find the student by email
+    const student = await Personal.findOne({ Email: email });
+    
+    if (!student) {
+      return res.status(404).json({ message: "Student not found" });
+    }
+
+    // Update only the fields provided in the request body
+    if (rollNumber) student.RollNumber = rollNumber;
+    if (department) student.Department = department;
+    if (personalEmail) student.PersonalEmail = personalEmail;
+    if (tenthMark) student.TenthMark = tenthMark;
+    if (twelfthMark) student.TwelfthMark = twelfthMark;
+    if (currentSemester) student.CurrentSememseter = currentSemester;
+    if (CGPA) student.CGPA = CGPA;
+    if (gender) student.Gender = gender;
+    if (yearOfPassing) student.YearOfPassing = yearOfPassing;
+    if (resume) student.Resume = resume;
+
+    // Save the updated student information
+    await student.save();
+
+    // Respond with the updated student data
+    res.status(200).json({ message: "Student details updated successfully", student });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Error updating student details" });
+  }
+});
+
+
 // Route for adding a POC
 Router.post('/add-poc', async (req, res) => {
   const { Email} = req.body;
