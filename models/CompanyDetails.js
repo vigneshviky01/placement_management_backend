@@ -1,6 +1,6 @@
 import mongoose from 'mongoose';
 
-const Pocschema = new mongoose.Schema({
+const CompanyDetailsschema = new mongoose.Schema({
     Companyname: String,
     criteria: String,
     ctc: String,
@@ -12,6 +12,6 @@ const Pocschema = new mongoose.Schema({
     bond: String,
 });
 
-const Poc = mongoose.model("Poc", Pocschema);
+const CompanyDetails= mongoose.model("companydetails", CompanyDetailsschema);
 
-export default Poc;
+export default CompanyDetails;

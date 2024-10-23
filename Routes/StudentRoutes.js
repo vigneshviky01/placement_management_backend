@@ -5,7 +5,7 @@ import express from "express";
 import nodemailer from 'nodemailer'; // Import nodemailer for sending OTP emails
 import EmailPassword from "../models/EmailPassword.js"; 
 import Personal from "../models/Personal.js";
-import Poc from "../models/PocModel.js"; 
+ 
 import crypto from 'crypto'; // For generating OTP
 import OTP from "../models/otp.js"; // Create OTP schema (to store OTP temporarily)
 import bcrypt from 'bcrypt';
@@ -186,29 +186,7 @@ Router.post("/login", async (req, res) => {
 });
 
 
-// Route to handle POC submissions with JD file
-Router.post("/poc", async (req, res) => {
-  const { Companyname, criteria, ctc, dept, skills, date, recruitmentProcess, location, bond } = req.body;
 
-
-  try {
-    const poc = await Poc.create({
-      Companyname,
-      criteria,
-      ctc,
-      dept,
-      skills,
-      date,
-      recruitmentProcess,
-      location,
-      bond,
-    });
-
-    res.json({ poc });
-  } catch (err) {
-    res.status(500).json("Error occurred while submitting");
-  }
-});
 
 Router.post("/student", async (req, res) => {
   const email = req.body.email;
