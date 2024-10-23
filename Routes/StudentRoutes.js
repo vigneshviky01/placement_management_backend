@@ -227,12 +227,13 @@ Router.post("/student", async (req, res) => {
 
 // Route to update student details selectively (PATCH request)
 Router.patch('/student/update', async (req, res) => {
+  console.log(req.body)
   const { email, rollNumber, department, personalEmail, tenthMark, twelfthMark, currentSemester, CGPA, gender, yearOfPassing, resume } = req.body;
 
   try {
     // Find the student by email
     const student = await Personal.findOne({ Email: email });
-    
+    console.log(student);
     if (!student) {
       return res.status(404).json({ message: "Student not found" });
     }
