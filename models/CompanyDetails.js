@@ -13,5 +13,4 @@ const CompanyDetailsschema = new mongoose.Schema({
 });
 
 const CompanyDetails= mongoose.model("companydetails", CompanyDetailsschema);
-
 export default CompanyDetails;

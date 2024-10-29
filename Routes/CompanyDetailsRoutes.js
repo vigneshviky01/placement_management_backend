@@ -8,6 +8,7 @@ dotenv.config();
 // Route to handle POC submissions with JD file
 Router.post("/", async (req, res) => {
     const { Companyname, criteria, ctc, dept, skills, date, recruitmentProcess, location, bond } = req.body;
+    console.log(req.body)
   
   
     try {
@@ -48,6 +49,24 @@ Router.get('/:Companyname', async (req, res) => {
       res.status(500).json({ message: 'Internal Server Error' });
   }
 });
+
+// GET route to fetch all company details
+Router.get('/', async (req, res) => {
+  try {
+      const companies = await CompanyDetails.find();  // Fetch all company details from MongoDB
+
+      if (companies.length === 0) {
+          return res.status(404).json({ message: 'No companies found' });
+      }
+
+      res.status(200).json(companies);  // Return the array of companies
+  } catch (error) {
+      console.error('Error fetching company details:', error);
+      res.status(500).json({ message: 'Internal Server Error' });
+  }
+});
+
+
 
 
 
