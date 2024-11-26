@@ -30,10 +30,10 @@ Router.post("/", async (req, res) => {
     }
   });
 
-// Define the Company model
 
 
-// GET route to fetch company details by company name
+
+// // GET route to fetch company details by company name
 Router.get('/:Companyname', async (req, res) => {
   try {
       const companyName = req.params.Companyname;  // Fetch the company name from the request parameter
@@ -52,17 +52,49 @@ Router.get('/:Companyname', async (req, res) => {
 
 // GET route to fetch all company details
 Router.get('/', async (req, res) => {
+  // try {
+  //     const companies = await CompanyDetails.find();  // Fetch all company details from MongoDB
+
+  //     if (companies.length === 0) {
+  //         return res.status(404).json({ message: 'No companies found' });
+  //     }
+
+  //     res.status(200).json(companies);  // Return the array of companies
+  // } catch (error) {
+  //     console.error('Error fetching company details:', error);
+  //     res.status(500).json({ message: 'Internal Server Error' });
+  // }
+
+  try{
+  const companies = await CompanyDetails.find();
+  if (companies.length === 0) {
+          res.json( 'No companies found' );
+       }
+
+       else{
+
+         res.json(companies);
+       }}
+       catch(err){
+        res.json(err)
+       }
+
+});
+
+// DELETE route to delete company by company name
+Router.delete('/:Companyname', async (req, res) => {
   try {
-      const companies = await CompanyDetails.find();  // Fetch all company details from MongoDB
+    const companyName = req.params.Companyname;  // Get the company name from the URL parameter
+    const deletedCompany = await CompanyDetails.findOneAndDelete({ Companyname: companyName });
 
-      if (companies.length === 0) {
-          return res.status(404).json({ message: 'No companies found' });
-      }
+    if (!deletedCompany) {
+      return res.status(404).json({ message: 'Company not found' });
+    }
 
-      res.status(200).json(companies);  // Return the array of companies
+    res.status(200).json({ message: 'Company deleted successfully' });
   } catch (error) {
-      console.error('Error fetching company details:', error);
-      res.status(500).json({ message: 'Internal Server Error' });
+    console.error('Error deleting company:', error);
+    res.status(500).json({ message: 'Internal Server Error' });
   }
 });
 
@@ -113,6 +145,31 @@ Router.patch('/', async (req, res) => {
     res.status(500).json({ message: "Error in updating company details" });
   }
 });
+
+
+// PUT route to update company details by company name
+Router.put('/:Companyname', async (req, res) => {
+  try {
+      const companyName = req.params.Companyname;
+      const updateData = req.body;
+
+      const updatedCompany = await CompanyDetails.findOneAndUpdate(
+          { Companyname: companyName },
+          updateData,
+          { new: true }
+      );
+
+      if (!updatedCompany) {
+          return res.status(404).json({ message: "Company not found" });
+      }
+
+      res.status(200).json({ message: "Company details updated successfully", data: updatedCompany });
+  } catch (error) {
+      console.error("Error updating company details:", error);
+      res.status(500).json({ message: "Internal Server Error" });
+  }
+});
+
 
 
 

@@ -5,6 +5,7 @@ import express from "express";
 import nodemailer from 'nodemailer'; // Import nodemailer for sending OTP emails
 import EmailPassword from "../models/EmailPassword.js"; 
 import Personal from "../models/Personal.js";
+import StudentForEachCompany from "../models/StudentsForEachCompany.js";
  
 import crypto from 'crypto'; // For generating OTP
 import OTP from "../models/otp.js"; // Create OTP schema (to store OTP temporarily)
@@ -185,9 +186,6 @@ Router.post("/login", async (req, res) => {
   }
 });
 
-
-
-
 Router.post("/student", async (req, res) => {
   const email = req.body.email;
   console.log(email);
@@ -277,6 +275,39 @@ Router.post('/remove-poc', async (req, res) => {
       res.status(200).json({ message: "POC removed successfully" });
   } catch (error) {
       res.status(500).json({ message: "Error updating role", error });
+  }
+});
+
+
+// Endpoint to add student email to a company
+Router.post("/add_student_to_company", async (req, res) => {
+  const { companyName, email } = req.body; // Extract company name and email from the request body
+
+  try {
+    // Check if the company exists
+    const company = await StudentForEachCompany.findOne({ CompanyName: companyName });
+
+    if (company) {
+      // If company exists, add the email to the StudentsEmail array
+      if (!company.StudentsEmail.includes(email)) {
+        company.StudentsEmail.push(email);
+        await company.save();
+        return res.status(200).json({ message: "Applied successfully!" });
+      } else {
+        return res.status(400).json({ message: "You already applied for this Company" });
+      }
+    } else {
+      // If company does not exist, create a new document with the company name and email
+      const newCompany = new StudentForEachCompany({
+        CompanyName: companyName,
+        StudentsEmail: [email],
+      });
+      await newCompany.save();
+      return res.status(201).json({ message: "Applied successfully!" });
+    }
+  } catch (error) {
+    console.error("Error in Applying:", error);
+    return res.status(500).json({ message: "An error occurred while processing the request." });
   }
 });
 
