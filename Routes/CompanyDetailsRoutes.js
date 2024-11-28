@@ -1,5 +1,7 @@
 import express from "express";
 import CompanyDetails from "../models/CompanyDetails.js";
+import StudentForEachCompany from "../models/StudentsForEachCompany.js";
+
 import dotenv from 'dotenv';
 const Router = express.Router();
 dotenv.config();
@@ -7,7 +9,7 @@ dotenv.config();
 
 // Route to handle POC submissions with JD file
 Router.post("/", async (req, res) => {
-    const { Companyname, criteria, ctc, dept, skills, date, recruitmentProcess, location, bond } = req.body;
+    const { Companyname, criteria,currentBacklogs,totalBacklogs, ctc, dept, skills, date, recruitmentProcess, location, bond ,role } = req.body;
     console.log(req.body)
   
   
@@ -15,6 +17,8 @@ Router.post("/", async (req, res) => {
       const companydetails = await CompanyDetails.create({
         Companyname,
         criteria,
+        currentBacklogs,
+        totalBacklogs,
         ctc,
         dept,
         skills,
@@ -22,6 +26,7 @@ Router.post("/", async (req, res) => {
         recruitmentProcess,
         location,
         bond,
+        role,
       });
   
       res.json({companydetails});
@@ -84,19 +89,35 @@ Router.get('/', async (req, res) => {
 // DELETE route to delete company by company name
 Router.delete('/:Companyname', async (req, res) => {
   try {
-    const companyName = req.params.Companyname;  // Get the company name from the URL parameter
+    const companyName = req.params.Companyname; // Get the company name from the URL parameter
+
+    // Delete the company from the CompanyDetails collection
     const deletedCompany = await CompanyDetails.findOneAndDelete({ Companyname: companyName });
 
     if (!deletedCompany) {
-      return res.status(404).json({ message: 'Company not found' });
+      return res.status(404).json({ message: `Company '${companyName}' not found in CompanyDetails` });
     }
 
-    res.status(200).json({ message: 'Company deleted successfully' });
+    // Attempt to delete the associated record from the StudentForEachCompany collection
+    const deletedStudentRecord = await StudentForEachCompany.findOneAndDelete({ CompanyName: companyName });
+
+    if (!deletedStudentRecord) {
+      console.warn(`No associated student record found for company: '${companyName}'`);
+    }
+
+    // Return success response
+    res.status(200).json({
+      message: `Company '${companyName}' and associated student record ${
+        deletedStudentRecord ? '' : 'not '
+      }deleted successfully`,
+    });
   } catch (error) {
-    console.error('Error deleting company:', error);
+    console.error('Error deleting company and associated student record:', error);
     res.status(500).json({ message: 'Internal Server Error' });
   }
 });
+
+
 
 
 
@@ -107,13 +128,16 @@ Router.patch('/', async (req, res) => {
   const {  
     Companyname,
     criteria,
+    currentBacklogs,
+    totalBacklogs,
     ctc,
     dept,
     skills,
     date,
     recruitmentProcess,
     location,
-    bond,} = req.body;
+    bond,
+  role,} = req.body;
 
   try {
     // Find the student by email
@@ -126,6 +150,8 @@ Router.patch('/', async (req, res) => {
     // Update only the fields provided in the request body
     if (Companyname) company.Companyname = Companyname;
     if (criteria) company.criteria = criteria;
+    if (currentBacklogs) company.currentBacklogs = currentBacklogs;
+    if (totalBacklogs) company.totalBacklogs = totalBacklogs;
     if (ctc) company.ctc = ctc;
     if (dept) company.dept = dept;
     if (skills) company.skills = skills;
@@ -133,6 +159,7 @@ Router.patch('/', async (req, res) => {
     if (recruitmentProcess) company.recruitmentProcess = recruitmentProcess;
     if (location) company.location = location;
     if (bond) company.bond = bond;
+    if (role) company.role = role;
   
 
     // Save the updated student information

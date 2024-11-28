@@ -6,7 +6,8 @@ import nodemailer from 'nodemailer'; // Import nodemailer for sending OTP emails
 import EmailPassword from "../models/EmailPassword.js"; 
 import Personal from "../models/Personal.js";
 import StudentForEachCompany from "../models/StudentsForEachCompany.js";
- 
+import PostPlacementProcess from "../models/PostPlacementProcess.js";
+
 import crypto from 'crypto'; // For generating OTP
 import OTP from "../models/otp.js"; // Create OTP schema (to store OTP temporarily)
 import bcrypt from 'bcrypt';
@@ -201,10 +202,43 @@ Router.post("/student", async (req, res) => {
   }
 });
 
+// Router.post("/student", async (req, res) => {
+//   const { email } = req.body;
+//   try {
+//     const student = await Personal.findOne({ Email: email });
+//     if (!student) {
+//       return res.status(404).json({ message: "Student not found" });
+//     }
+//     res.json(student);
+//   } catch (err) {
+//     console.error(err);
+//     return res.status(500).json({ message: "Server error" });
+//   }
+// });
+
+// Route to update student details
+Router.patch("/student/profileupdate", async (req, res) => {
+  const { email, ...updateData } = req.body;
+  try {
+    const updatedStudent = await Personal.findOneAndUpdate(
+      { Email: email },
+      updateData,
+      { new: true } // Returns the updated document
+    );
+    if (!updatedStudent) {
+      return res.status(404).json({ message: "Student not found" });
+    }
+    res.status(200).json({ message: "Student details updated successfully", student: updatedStudent });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Error updating student details" });
+  }
+});
+
 // Route to update student details selectively (PATCH request)
 Router.patch('/student/update', async (req, res) => {
   console.log(req.body)
-  const { email, rollNumber, department, personalEmail, tenthMark, twelfthMark, currentSemester, CGPA, gender, yearOfPassing, resume } = req.body;
+  const { email, rollNumber, department, personalEmail, tenthMark, twelfthMark, currentSemester, CGPA,currentBacklogs,totalBacklogs, gender, yearOfPassing, resume } = req.body;
 
   try {
     // Find the student by email
@@ -222,6 +256,8 @@ Router.patch('/student/update', async (req, res) => {
     if (twelfthMark) student.TwelfthMark = twelfthMark;
     if (currentSemester) student.CurrentSememseter = currentSemester;
     if (CGPA) student.CGPA = CGPA;
+    if (currentBacklogs) student.currentBacklogs = currentBacklogs;
+    if (totalBacklogs) student.totalBacklogs = totalBacklogs;
     if (gender) student.Gender = gender;
     if (yearOfPassing) student.YearOfPassing = yearOfPassing;
     if (resume) student.Resume = resume;
@@ -310,5 +346,122 @@ Router.post("/add_student_to_company", async (req, res) => {
     return res.status(500).json({ message: "An error occurred while processing the request." });
   }
 });
+
+Router.get("/get_all_students_applied_to_company", async (req, res) => {
+  try {
+    const companies = await StudentForEachCompany.find();
+    console.log(companies)
+    res.status(200).json(companies);
+  } catch (error) {
+    console.error("Error fetching all data:", error);
+    res.status(500).json({ message: "An error occurred while fetching data." });
+  }
+});
+
+Router.post("/companies_by_student", async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(400).json({ message: "Student email is required." });
+    }
+
+    // Find companies where the student has applied
+    const companies = await StudentForEachCompany.find({
+      StudentsEmail: email,
+    }).select("CompanyName -_id");
+
+    if (companies.length === 0) {
+      return res.status(404).json({ message: "No companies found for this student." });
+    }
+
+    // Extract and send just the company names
+    const companyList = companies.map((company) => company.CompanyName);
+
+    res.status(200).json({ companies: companyList });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Server Error. Please try again later." });
+  }
+});
+
+Router.delete("/removeApplication", async (req, res) => {
+  try {
+    const { email, companyName } = req.body;
+
+    if (!email || !companyName) {
+      return res.status(400).json({ message: "Email and company name are required." });
+    }
+
+    // Find the company and update the list of students
+    const result = await StudentForEachCompany.findOneAndUpdate(
+      { CompanyName: companyName },
+      { $pull: { StudentsEmail: email } }, // Remove the email from the list
+      { new: true }
+    );
+
+    if (!result) {
+      return res.status(404).json({ message: "Company or student not found." });
+    }
+
+    res.status(200).json({ message: "Student application removed successfully." });
+  } catch (error) {
+    console.error("Error removing student application:", error);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+});
+
+Router.post('/placement-process', async (req, res) => {
+  try {
+    // Extract relevant data from the request body
+    const { companyName,type, message, roundType, studentInfo, fileData } = req.body;
+    console.log("Request body:", req.body);
+
+    // Create a new placement process entry
+    const newPlacementProcess = new PostPlacementProcess({
+      companyName:companyName,
+      type: type,
+      message: message || null, // Message is optional for some types
+      roundType: roundType || null, // RoundType is optional for "Selected students"
+      studentInfo: studentInfo || null, // Student info is optional
+      fileData: fileData && fileData.length ? fileData : null, // File data is optional
+    });
+
+    console.log('Prepared Data:', newPlacementProcess);
+    // Save the new placement process entry to MongoDB
+    await newPlacementProcess.save();
+
+    // Return success response
+    res.status(200).json({ message: 'Post placement process saved successfully', data: newPlacementProcess });
+  } catch (error) {
+    // Handle errors
+    console.error(error);
+    res.status(500).json({ message: 'Error saving placement process', error: error.message });
+  }
+});
+
+
+Router.get('/placement-process', async (req, res) => {
+  try {
+    const placementProcess = await PostPlacementProcess.find();
+    if (!placementProcess || placementProcess.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'No placement processes found',
+      });
+    }
+    res.status(200).json({
+      success: true,
+      data: placementProcess,
+    });
+  } catch (error) {
+    console.error('Error fetching placement processes:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch placement processes',
+    });
+  }
+});
+
 
 export default Router;

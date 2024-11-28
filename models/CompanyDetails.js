@@ -3,6 +3,8 @@ import mongoose from 'mongoose';
 const CompanyDetailsschema = new mongoose.Schema({
     Companyname: String,
     criteria: String,
+    currentBacklogs:String,
+    totalBacklogs:String,
     ctc: String,
     dept: String,
     skills: String,
@@ -10,6 +12,7 @@ const CompanyDetailsschema = new mongoose.Schema({
     recruitmentProcess: String,
     location: String,
     bond: String,
+    role: String,
 });
 
 const CompanyDetails= mongoose.model("companydetails", CompanyDetailsschema);

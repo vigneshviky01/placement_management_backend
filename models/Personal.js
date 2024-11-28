@@ -11,6 +11,8 @@ const Personalschema = new mongoose.Schema({
   TwelfthMark:String,
   CurrentSememseter:String,
  CGPA:String,
+ currentBacklogs:String,
+      totalBacklogs:String,
   Gender:String,
   YearOfPassing:String,
   Resume:String,
